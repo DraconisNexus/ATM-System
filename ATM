@@ -1,0 +1,39 @@
+import ballerina/http;
+import ballerina/log;
+
+service /atm on new http:Listener(8080) {
+
+    // A mock database of users with their fingerprint data (for demonstration purposes)
+    map<string> userDatabase = {
+        "user1": "fingerprintData1",
+        "user2": "fingerprintData2"
+    };
+
+    // Endpoint to authenticate user via fingerprint
+    resource function post authenticate(http:Caller caller, http:Request req) returns error? {
+        json payload = check req.getJsonPayload();
+        string userId = <string>payload.userId;
+        string fingerprintData = <string>payload.fingerprintData;
+
+        // Validate user fingerprint
+        if (userDatabase.hasKey(userId) && userDatabase[userId] == fingerprintData) {
+            // Authentication successful
+            check caller->respond("Authentication successful for user: " + userId);
+        } else {
+            // Authentication failed
+            check caller->respond("Authentication failed for user: " + userId);
+        }
+    }
+
+    // Endpoint to perform a transaction
+    resource function post transaction(http:Caller caller, http:Request req) returns error? {
+        json payload = check req.getJsonPayload();
+        string userId = <string>payload.userId;
+        decimal amount = <decimal>payload.amount;
+
+        // Here you would typically check if the user is authenticated and has sufficient funds
+        // For demonstration, we'll just log the transaction
+        log:printInfo("Transaction of amount " + amount.toString() + " requested by user: " + userId);
+        check caller->respond("Transaction successful for user: " + userId + " of amount: " + amount);
+    }
+}
